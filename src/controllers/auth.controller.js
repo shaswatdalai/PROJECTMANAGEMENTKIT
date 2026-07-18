@@ -4,7 +4,7 @@ import {ApiResponse} from "../utils/api-response.js";
 import {asyncHandler} from "../utils/async-handler.js";
 import { ApiError}  from "../utils/api-error.js";
 import { emailVerificationMailgenContent, sendEmail } from "../utils/mail.js";
-const generateAccessAndRefreshToken = asyncHandler(async(user) => {
+const generateAccessAndRefreshToken = asyncHandler(async(userId) => {
     try {
         const user = await User.findById(userId)
         const accessToken =  user.generateAccessToken()//calls the instance method of the user model to generate access token. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
@@ -28,6 +28,7 @@ const registerUser = asyncHandler(async(req,res) => {
         throw new ApiError(409,"User with this username or email already exists",[])//409 means conflict. this error will be caught by the asyncHandler and passed to the next middleware (error handler). ye express ka built feature hai. agar error aata hai to next(error) call hoga aur error handler middleware ko call karega
     }
     //the capital 'User' is the model and the small 'user' is the instance of the model. we can use the model to create a new user and save it to the database. we can also use the model to find a user in the database. we can also use the model to update a user in the database. we can also use the model to delete a user from the database. we can also use the model to perform other operations on the user collection in the database.
+    //this User.create calls the pre(hook) , hashes it and saves it then
     const user = await User.create({//this will create a new user and save it to the database. this will also hash the password before saving it to the database. this is done in the pre hook of the user schema. this is done automatically by mongoose. we don't have to do anything for that.
         email,password,username,isEmailVerified:false
     })
@@ -37,7 +38,7 @@ const registerUser = asyncHandler(async(req,res) => {
     //these bottom two lines will save the hashed token and token expiry to the database. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
     user.emailVerificationToken = hashedToken
     user.emailVerificationExpiry = tokenExpiry
-    
+    //jab bhi save likho , uske baad validateBeforeSave likh lena
     await user.save({validateBeforeSave:false})//this will save the hashed token and token expiry to the database. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
     //final part is to send the token to the user via email. we will use the sendEmail function to send the email to the user. we will use the emailVerificationMailgenContent function to generate the email content. we will use the unHashedToken to send it to the user in the email. we will use the hashedToken to save it to the database. we will use the tokenExpiry to set the expiry time of the token. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
     await sendEmail({
@@ -50,7 +51,7 @@ const registerUser = asyncHandler(async(req,res) => {
         )
     })
     //we dont need all the data from the user . below we wrote the stuff we dont need
-    await User.findById(user._id).select(
+    const createdUser = await User.findById(user._id).select(
         "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
     )
 
