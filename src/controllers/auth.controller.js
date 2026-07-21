@@ -6,7 +6,7 @@ import { ApiError}  from "../utils/api-error.js";
 import { emailVerificationMailgenContent, sendEmail } from "../utils/mail.js";
 const generateAccessAndRefreshToken = asyncHandler(async(userId) => {
     try {
-        const user = await User.findById(userId)
+        const user = await User.findById(userId)//User -- mongodb. findById is a mongoose model method . we get a mongoose document from this line
         const accessToken =  user.generateAccessToken()//calls the instance method of the user model to generate access token. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
         const refreshToken = user.generateRefreshToken()
         user.refreshToken = refreshToken//this refresh token will be saved in the database. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
@@ -17,9 +17,9 @@ const generateAccessAndRefreshToken = asyncHandler(async(userId) => {
     }
 })
 
-const registerUser = asyncHandler(async(req,res) => {
+const registerUser = asyncHandler(async(req,res) => {//this line is passed to asyncHandler.js and this function becomes request handler there
        const {email,username,password,role} = req.body
-       
+       //we dont use only 'find() ' cuz it returns an array 
        const existedUser = await User.findOne({//i dont want to register the user if the username or email already exists in the database. so i will check if the username or email already exists in the database. if it exists then i will throw an error. if it does not exist then i will create a new user and save it to the database.
         $or: [{username},{email}]//to chek if the username or email already exists in the database. $or is a mongoDB operator which is used to perform logical OR operation. it will return true if any of the condition is true. in this case it will return true if either username or email already exists in the database.
           
@@ -42,18 +42,18 @@ const registerUser = asyncHandler(async(req,res) => {
     await user.save({validateBeforeSave:false})//this will save the hashed token and token expiry to the database. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
     //final part is to send the token to the user via email. we will use the sendEmail function to send the email to the user. we will use the emailVerificationMailgenContent function to generate the email content. we will use the unHashedToken to send it to the user in the email. we will use the hashedToken to save it to the database. we will use the tokenExpiry to set the expiry time of the token. this is done in the user model. this is done automatically by mongoose. we don't have to do anything for that.
     await sendEmail({
-        email:user?.email,
+        email:user.email,
         subject:"please verify your email",
         mailgenContent: emailVerificationMailgenContent(
             user.username,
             `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
-
+              //req is express 
         )
     })
     //we dont need all the data from the user . below we wrote the stuff we dont need
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
-    )
+    )//select() is like a filter.' - ' minus sign is exclude
 
     if(!createdUser){
         throw new ApiError(500,"Something went wrong while registering a user")

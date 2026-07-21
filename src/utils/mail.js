@@ -2,7 +2,7 @@ import mailgen from 'mailgen';//this is for generating beautiful email templates
 import nodemailer from 'nodemailer';//this is for sending emails
 
 const sendEmail = async (options) => {//options is an object which will have the following properties : to, subject, text, html. to is the email address of the recipient, subject is the subject of the email, text is the plain text version of the email and html is the html version of the email. we will use nodemailer to send the email and mailgen to generate beautiful email templates.
-    const mailGenerator = new Mailgen({
+    const mailGenerator = new mailgen({
         theme: "default",
         product: {
             name:"Task Manager",//this is the name of the product which will be displayed in the email template
@@ -12,8 +12,8 @@ const sendEmail = async (options) => {//options is an object which will have the
 
     const emailTextual = mailGenerator.generatePlaintext(options.mailgenContent)//this will generate the plain text version of the email template. we will use this to send the email in plain text format. this is optional but it is a good practice to send the email in plain text format as well. because some email clients do not support html emails and they will display the email in plain text format. so it is a good practice to send the email in plain text format as well.
     const emailHtml = mailGenerator.generate(options.mailgenContent)//this will generate the html version of the email template. we will use this to send the email in html format. this is optional but it is a good practice to send the email in html format as well. because some email clients do not support html emails and they will display the email in plain text format. so it is a good practice to send the email in html format as well.
-
-   const trasporter =  nodemailer.createTransport({//this is the configuration for the email transporter. we will use this to send the email. we will use mailtrap for testing purpose. mailtrap is a fake SMTP server which will catch all the emails sent to it and display them in the mailtrap dashboard. this way we can test our email sending functionality without actually sending the email to the recipient. we can also use other email services like gmail, sendgrid, etc. but for testing purpose we will use mailtrap.
+  //smtp config
+   const transporter =  nodemailer.createTransport({//this is the configuration for the email transporter. we will use this to send the email. we will use mailtrap for testing purpose. mailtrap is a fake SMTP server which will catch all the emails sent to it and display them in the mailtrap dashboard. this way we can test our email sending functionality without actually sending the email to the recipient. we can also use other email services like gmail, sendgrid, etc. but for testing purpose we will use mailtrap.
         host:process.env.MAILTRAP_SMTP_HOST,
         port:process.env.MAILTRAP_SMTP_PORT,
         auth:{
@@ -35,7 +35,7 @@ const sendEmail = async (options) => {//options is an object which will have the
     }
     catch(error){
         console.error("Error sending email, Make sure that you have provided your MailTrap credentials properly", error)
-        throw error
+        throw error// will point to async handler
     }
 
 }

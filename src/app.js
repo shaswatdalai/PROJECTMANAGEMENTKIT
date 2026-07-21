@@ -1,6 +1,6 @@
 import express from "express"
 import cors from "cors"
-import healthCheckRouter from "./routes/healthCheck.route.js"
+
 
 const app = express()
 
@@ -17,9 +17,11 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type"]
 }))
-
+import healthCheckRouter from "./routes/healthCheck.route.js"
+import authRouter from "./routes/auth.route.js"
 // routes
-app.use(healthCheckRouter)
+app.use("/api/v1/healthCheckRouter",healthCheckRouter)
+app.use("/api/v1/auth",authRouter)
 
 app.get("/", (req, res) => { // root route
     res.send("welcome to basecampy!")
